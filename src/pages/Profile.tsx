@@ -1,26 +1,42 @@
 import { useState } from 'react';
-import { User, Mail, Shield, Calendar, Save, Crown } from 'lucide-react';
+import { User, Mail, Shield, Calendar, Save, Crown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
 
 export default function Profile() {
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
+  const { profile, isLoading, updateProfile } = useProfile();
+  const [displayName, setDisplayName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
-  const [profile, setProfile] = useState({
-    name: user?.email?.split('@')[0] || 'User',
-    email: user?.email || 'user@logguardian.io',
-    role: user?.role || 'user',
-    joined: 'March 2026',
-    bio: isAdmin
-      ? 'System administrator managing Log Guardian infrastructure.'
-      : 'Log Guardian team member with monitoring access.',
-  });
+  // Initialize display name from profile
+  if (profile && !initialized) {
+    setDisplayName(profile.display_name || profile.email?.split('@')[0] || '');
+    setInitialized(true);
+  }
 
-  const handleSave = () => {
-    toast({ title: '✅ Profile Updated', description: 'Your profile has been saved.' });
+  const handleSave = async () => {
+    setIsSaving(true);
+    const { error } = await updateProfile({ display_name: displayName }) || {};
+    setIsSaving(false);
+    if (error) {
+      toast({ title: '❌ Error', description: 'Failed to save profile.', variant: 'destructive' });
+    } else {
+      toast({ title: '✅ Profile Updated', description: 'Your profile has been saved.' });
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -37,7 +53,7 @@ export default function Profile() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-foreground">{profile.name}</h2>
+              <h2 className="text-xl font-bold text-foreground">{displayName || profile?.email?.split('@')[0]}</h2>
               {isAdmin && (
                 <span className="flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning border border-warning/20">
                   <Crown className="h-3 w-3" />
@@ -46,9 +62,12 @@ export default function Profile() {
               )}
             </div>
             <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{profile.email}</span>
-              <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" />{profile.role}</span>
-              <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{profile.joined}</span>
+              <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{profile?.email || user?.email}</span>
+              <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" />{user?.role || 'user'}</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5" />
+                {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
+              </span>
             </div>
           </div>
         </div>
@@ -61,8 +80,8 @@ export default function Profile() {
               <label className="mb-1 block text-xs text-muted-foreground">Display Name</label>
               <input
                 type="text"
-                value={profile.name}
-                onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
@@ -70,25 +89,16 @@ export default function Profile() {
               <label className="mb-1 block text-xs text-muted-foreground">Email</label>
               <input
                 type="email"
-                value={profile.email}
+                value={profile?.email || user?.email || ''}
                 disabled
                 className="w-full rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
               />
               <p className="mt-1 text-[10px] text-muted-foreground">Email cannot be changed</p>
             </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Bio</label>
-              <textarea
-                value={profile.bio}
-                onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
-                rows={3}
-                className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-              />
-            </div>
           </div>
-          <Button onClick={handleSave} className="gap-2">
-            <Save className="h-4 w-4" />
-            Save Changes
+          <Button onClick={handleSave} className="gap-2" disabled={isSaving}>
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </div>

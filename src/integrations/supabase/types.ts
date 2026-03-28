@@ -14,7 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alert_settings: {
+        Row: {
+          alert_on_anomaly: boolean | null
+          alert_on_critical: boolean | null
+          alert_on_error: boolean | null
+          created_at: string | null
+          email_alerts_enabled: boolean | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_on_anomaly?: boolean | null
+          alert_on_critical?: boolean | null
+          alert_on_error?: boolean | null
+          created_at?: string | null
+          email_alerts_enabled?: boolean | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_on_anomaly?: boolean | null
+          alert_on_critical?: boolean | null
+          alert_on_error?: boolean | null
+          created_at?: string | null
+          email_alerts_enabled?: boolean | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_anomaly: boolean | null
+          level: string
+          message: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_anomaly?: boolean | null
+          level: string
+          message: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_anomaly?: boolean | null
+          level?: string
+          message?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          email: string
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          email: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          email?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
