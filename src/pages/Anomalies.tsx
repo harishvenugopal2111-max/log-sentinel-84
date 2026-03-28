@@ -1,18 +1,10 @@
 import { useState, useEffect } from 'react';
 import { LogTable } from '@/components/LogTable';
-import { generateLogEntry, generateInitialLogs, type LogEntry } from '@/lib/mock-data';
+import { useLogs } from '@/hooks/useLogs';
 import { AlertTriangle, Brain } from 'lucide-react';
 
 export default function Anomalies() {
-  const [logs, setLogs] = useState<LogEntry[]>(() => generateInitialLogs(100));
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLogs((prev) => [generateLogEntry(), ...prev].slice(0, 500));
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
+  const { logs } = useLogs();
   const anomalies = logs.filter((l) => l.isAnomaly);
 
   return (

@@ -4,24 +4,21 @@ import { StatCard } from '@/components/StatCard';
 import { LogTable } from '@/components/LogTable';
 import { MetricsChart } from '@/components/MetricsChart';
 import { LogSimulator } from '@/components/LogSimulator';
+import { useLogs } from '@/hooks/useLogs';
 import {
-  generateLogEntry,
-  generateInitialLogs,
   generateMetrics,
-  type LogEntry,
   type LogLevel,
   type SystemMetric,
 } from '@/lib/mock-data';
 
 export default function Dashboard() {
-  const [logs, setLogs] = useState<LogEntry[]>(() => generateInitialLogs(20));
+  const { logs, insertLog } = useLogs();
   const [metrics, setMetrics] = useState<SystemMetric[]>(() => generateMetrics(20));
   const [isStreaming, setIsStreaming] = useState(true);
 
   useEffect(() => {
     if (!isStreaming) return;
     const interval = setInterval(() => {
-      setLogs((prev) => [generateLogEntry(), ...prev].slice(0, 200));
       setMetrics((prev) => {
         const last = prev[prev.length - 1];
         const newMetric: SystemMetric = {
@@ -37,22 +34,24 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [isStreaming]);
 
-  const handleSimulatorSubmit = useCallback((level: LogLevel, source: string, message: string) => {
-    const entry: LogEntry = {
-      id: `sim-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      level,
-      source,
-      message,
-      isAnomaly: level === 'CRITICAL',
-    };
-    setLogs((prev) => [entry, ...prev].slice(0, 200));
-  }, []);
+  const handleSimulatorSubmit = useCallback(async (level: LogLevel, source: string, message: string) => {
+    await insertLog(level, source, message);
+  }, [insertLog]);
 
-  const handleBurst = useCallback(() => {
-    const burst = Array.from({ length: 10 }, () => generateLogEntry());
-    setLogs((prev) => [...burst, ...prev].slice(0, 200));
-  }, []);
+  const handleBurst = useCallback(async () => {
+    const sources = ['api-gateway', 'auth-service', 'db-manager', 'cache-layer', 'worker-1'];
+    const messages = [
+      'Connection refused to database replica',
+      'PRIMARY DATABASE UNREACHABLE - failover initiated',
+      'Out of memory: process killed by OOM killer',
+      'SSL certificate verification failed',
+      'Cascading failure across service mesh',
+    ];
+    for (let i = 0; i < 5; i++) {
+      const levels: LogLevel[] = ['ERROR', 'CRITICAL', 'ERROR', 'CRITICAL', 'ERROR'];
+      await insertLog(levels[i], sources[i], messages[i]);
+    }
+  }, [insertLog]);
 
   const anomalyCount = logs.filter((l) => l.isAnomaly).length;
   const errorCount = logs.filter((l) => l.level === 'ERROR' || l.level === 'CRITICAL').length;
@@ -79,9 +78,9 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Logs" value={logs.length} icon={ScrollText} trend="Last 200 entries" />
+        <StatCard title="Total Logs" value={logs.length} icon={ScrollText} trend="Database entries" />
         <StatCard title="Anomalies" value={anomalyCount} icon={AlertTriangle} variant="destructive" trend="Auto-detected" />
-        <StatCard title="Error Rate" value={`${((errorCount / logs.length) * 100).toFixed(1)}%`} icon={Activity} variant="warning" />
+        <StatCard title="Error Rate" value={`${((errorCount / Math.max(logs.length, 1)) * 100).toFixed(1)}%`} icon={Activity} variant="warning" />
         <StatCard title="System Health" value="Monitored" icon={Shield} variant="success" trend="All services" />
       </div>
 
