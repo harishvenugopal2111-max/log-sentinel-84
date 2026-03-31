@@ -3,12 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { LogEntry, LogLevel } from '@/lib/mock-data';
 
+export interface AnomalyResult {
+  isAnomaly: boolean;
+  score: number;
+  reason?: string;
+  method?: string;
+}
+
 export function useLogs() {
   const { user } = useAuth();
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logs, setLogs] = useState<(LogEntry & { anomalyScore?: number; anomalyReason?: string })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch logs from database
   const fetchLogs = useCallback(async () => {
     const { data, error } = await supabase
       .from('logs')
@@ -32,7 +38,6 @@ export function useLogs() {
   useEffect(() => {
     fetchLogs();
 
-    // Subscribe to realtime log inserts
     const channel = supabase
       .channel('logs-realtime')
       .on(
@@ -58,19 +63,34 @@ export function useLogs() {
     };
   }, [fetchLogs]);
 
-  // Insert a log entry
+  // AI-powered anomaly analysis + insert
   const insertLog = useCallback(async (level: LogLevel, source: string, message: string) => {
     if (!user) return null;
-    
-    const isAnomaly = level === 'CRITICAL' || (level === 'ERROR' && Math.random() > 0.5);
-    
+
+    // Call AI anomaly detection
+    let anomalyResult: AnomalyResult = {
+      isAnomaly: level === 'CRITICAL' || (level === 'ERROR' && Math.random() > 0.5),
+      score: 0.5,
+    };
+
+    try {
+      const { data: aiData, error: aiError } = await supabase.functions.invoke('analyze-anomaly', {
+        body: { level, source, message },
+      });
+      if (!aiError && aiData) {
+        anomalyResult = aiData as AnomalyResult;
+      }
+    } catch (err) {
+      console.error('AI anomaly detection failed, using fallback:', err);
+    }
+
     const { data, error } = await supabase
       .from('logs')
       .insert({
         level,
         source,
         message,
-        is_anomaly: isAnomaly,
+        is_anomaly: anomalyResult.isAnomaly,
         user_id: user.id,
       })
       .select()
@@ -82,7 +102,7 @@ export function useLogs() {
     }
 
     // If anomaly, trigger alert
-    if (isAnomaly && data) {
+    if (anomalyResult.isAnomaly && data) {
       try {
         await supabase.functions.invoke('send-anomaly-alert', {
           body: {
@@ -91,6 +111,8 @@ export function useLogs() {
             source,
             message,
             userEmail: user.email,
+            anomalyScore: anomalyResult.score,
+            anomalyReason: anomalyResult.reason,
           },
         });
       } catch (err) {
@@ -98,7 +120,7 @@ export function useLogs() {
       }
     }
 
-    return data;
+    return { ...data, anomalyScore: anomalyResult.score, anomalyReason: anomalyResult.reason };
   }, [user]);
 
   return { logs, isLoading, insertLog, refetch: fetchLogs };
