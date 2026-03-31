@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Activity, AlertTriangle, ScrollText, Shield, Cpu, HardDrive } from 'lucide-react';
+import { Activity, AlertTriangle, ScrollText, Shield, Cpu, HardDrive, Wifi, WifiOff } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { LogTable } from '@/components/LogTable';
 import { MetricsChart } from '@/components/MetricsChart';
 import { LogSimulator } from '@/components/LogSimulator';
 import { useLogs } from '@/hooks/useLogs';
+import { motion } from 'framer-motion';
 import {
   generateMetrics,
   type LogLevel,
@@ -55,13 +56,20 @@ export default function Dashboard() {
 
   const anomalyCount = logs.filter((l) => l.isAnomaly).length;
   const errorCount = logs.filter((l) => l.level === 'ERROR' || l.level === 'CRITICAL').length;
+  const latestCpu = metrics[metrics.length - 1]?.cpu ?? 0;
+  const latestMem = metrics[metrics.length - 1]?.memory ?? 0;
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between"
+      >
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Real-time system monitoring</p>
+          <p className="text-sm text-muted-foreground">Real-time system monitoring • AI anomaly detection</p>
         </div>
         <button
           onClick={() => setIsStreaming(!isStreaming)}
@@ -71,17 +79,18 @@ export default function Dashboard() {
               : 'border-border bg-secondary text-muted-foreground'
           }`}
         >
+          {isStreaming ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
           <span className={`h-2 w-2 rounded-full ${isStreaming ? 'bg-primary animate-pulse' : 'bg-muted-foreground'}`} />
           {isStreaming ? 'Live' : 'Paused'}
         </button>
-      </div>
+      </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Logs" value={logs.length} icon={ScrollText} trend="Database entries" />
-        <StatCard title="Anomalies" value={anomalyCount} icon={AlertTriangle} variant="destructive" trend="Auto-detected" />
+        <StatCard title="Anomalies" value={anomalyCount} icon={AlertTriangle} variant="destructive" trend="AI-detected" />
         <StatCard title="Error Rate" value={`${((errorCount / Math.max(logs.length, 1)) * 100).toFixed(1)}%`} icon={Activity} variant="warning" />
-        <StatCard title="System Health" value="Monitored" icon={Shield} variant="success" trend="All services" />
+        <StatCard title="System Health" value={latestCpu < 80 ? 'Healthy' : 'Warning'} icon={Shield} variant={latestCpu < 80 ? 'success' : 'warning'} trend={`CPU: ${latestCpu.toFixed(0)}% • MEM: ${latestMem.toFixed(0)}%`} />
       </div>
 
       {/* Charts */}
@@ -95,7 +104,13 @@ export default function Dashboard() {
       {/* Simulator + Live Logs */}
       <LogSimulator onSubmit={handleSimulatorSubmit} onBurst={handleBurst} />
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Live Log Stream</h2>
+        <div className="flex items-center gap-2 mb-3">
+          <h2 className="text-sm font-semibold text-foreground">Live Log Stream</h2>
+          <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary border border-primary/20">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            {logs.length} entries
+          </span>
+        </div>
         <LogTable logs={logs} maxHeight="360px" />
       </div>
     </div>

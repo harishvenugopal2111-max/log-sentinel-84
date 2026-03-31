@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { type SystemMetric } from '@/lib/mock-data';
+import { motion } from 'framer-motion';
 
 interface MetricsChartProps {
   data: SystemMetric[];
@@ -18,13 +19,28 @@ interface MetricsChartProps {
 }
 
 export function MetricsChart({ data, dataKey, title, color, unit = '' }: MetricsChartProps) {
+  const latestValue = data.length > 0 ? data[data.length - 1][dataKey] : 0;
+
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <h3 className="mb-4 text-sm font-semibold text-foreground">{title}</h3>
-      <ResponsiveContainer width="100%" height={180}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.1 }}
+      className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/20"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-foreground font-mono">
+            {typeof latestValue === 'number' ? latestValue.toFixed(1) : latestValue}{unit}
+          </span>
+          <div className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: color }} />
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={160}>
         <AreaChart data={data}>
           <defs>
-            <linearGradient id={`grad-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={`grad-${String(dataKey)}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={color} stopOpacity={0.3} />
               <stop offset="95%" stopColor={color} stopOpacity={0} />
             </linearGradient>
@@ -56,10 +72,11 @@ export function MetricsChart({ data, dataKey, title, color, unit = '' }: Metrics
             dataKey={dataKey}
             stroke={color}
             strokeWidth={2}
-            fill={`url(#grad-${dataKey})`}
+            fill={`url(#grad-${String(dataKey)})`}
+            animationDuration={300}
           />
         </AreaChart>
       </ResponsiveContainer>
-    </div>
+    </motion.div>
   );
 }
