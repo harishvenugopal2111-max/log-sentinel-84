@@ -104,6 +104,75 @@ export type Database = {
         }
         Relationships: []
       }
+      system_metrics: {
+        Row: {
+          cpu_usage: number
+          created_at: string
+          id: string
+          memory_usage: number
+          process_count: number
+          user_id: string
+        }
+        Insert: {
+          cpu_usage: number
+          created_at?: string
+          id?: string
+          memory_usage: number
+          process_count?: number
+          user_id: string
+        }
+        Update: {
+          cpu_usage?: number
+          created_at?: string
+          id?: string
+          memory_usage?: number
+          process_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          anomaly_source: string | null
+          cpu_at_detection: number | null
+          created_at: string
+          description: string | null
+          id: string
+          memory_at_detection: number | null
+          severity: string
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anomaly_source?: string | null
+          cpu_at_detection?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          memory_at_detection?: number | null
+          severity?: string
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anomaly_source?: string | null
+          cpu_at_detection?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          memory_at_detection?: number | null
+          severity?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
