@@ -10,6 +10,8 @@ import Logs from "@/pages/Logs";
 import Anomalies from "@/pages/Anomalies";
 import Alerts from "@/pages/Alerts";
 import AutoHeal from "@/pages/AutoHeal";
+import Tasks from "@/pages/Tasks";
+import SystemMonitor from "@/pages/SystemMonitor";
 import Profile from "@/pages/Profile";
 import SettingsPage from "@/pages/SettingsPage";
 import Login from "@/pages/Login";
@@ -38,8 +40,10 @@ const App = () => (
               }
             >
               <Route path="/" element={<Dashboard />} />
+              <Route path="/system-monitor" element={<SystemMonitor />} />
               <Route path="/logs" element={<Logs />} />
               <Route path="/anomalies" element={<Anomalies />} />
+              <Route path="/tasks" element={<Tasks />} />
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/auto-heal" element={<AutoHeal />} />
               <Route path="/profile" element={<Profile />} />

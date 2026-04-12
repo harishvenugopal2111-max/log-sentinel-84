@@ -16,8 +16,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: Monitor, label: 'System Monitor', path: '/system-monitor' },
   { icon: ScrollText, label: 'Logs', path: '/logs' },
   { icon: Activity, label: 'Anomalies', path: '/anomalies' },
+  { icon: ClipboardList, label: 'Tasks', path: '/tasks' },
   { icon: Bell, label: 'Alerts', path: '/alerts' },
   { icon: Zap, label: 'Auto-Heal', path: '/auto-heal' },
 ];
